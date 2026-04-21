@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +19,13 @@ Future<void> main() async {
   );
 }
 
-class RedAyudaApp extends StatelessWidget {
+class RedAyudaApp extends ConsumerWidget {
   const RedAyudaApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
     return MaterialApp(
       title: 'RedAyuda',
       debugShowCheckedModeBanner: false,
@@ -31,10 +35,23 @@ class RedAyudaApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('RedAyuda — Sprint 1'),
+      home: authState.when(
+        data: (usuario) {
+          if (usuario != null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('¡Bienvenido a REDAYUDA!'),
+              ),
+            );
+          }
+          return const LoginPage();
+        },
+        loading: () => const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
+        error: (_, __) => const LoginPage(),
       ),
     );
   }
