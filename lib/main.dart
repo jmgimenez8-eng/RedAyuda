@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/auth/presentation/pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,11 +39,7 @@ class RedAyudaApp extends ConsumerWidget {
       home: authState.when(
         data: (usuario) {
           if (usuario != null) {
-            return const Scaffold(
-              body: Center(
-                child: Text('¡Bienvenido a REDAYUDA!'),
-              ),
-            );
+            return const HomePage();
           }
           return const LoginPage();
         },

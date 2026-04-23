@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/usuario_model.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 
 class AuthSupabaseDatasource {
   final SupabaseClient _client = Supabase.instance.client;
@@ -107,4 +109,42 @@ class AuthSupabaseDatasource {
       return UsuarioModel.fromJson(usuarioData);
     });
   }
+
+  Future<UsuarioModel> iniciarSesionConGoogle() async {
+    const webClientId = '623074679595-3d1opqct0op4gb2bt5521i26icl2s9ct.apps.googleusercontent.com';
+
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      serverClientId: webClientId,
+    );
+
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) throw Exception('Inicio de sesión cancelado');
+
+    final googleAuth = await googleUser.authentication;
+
+    final authResponse = await _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: googleAuth.idToken!,
+      accessToken: googleAuth.accessToken,
+    );
+
+    if (authResponse.user == null) {
+      throw Exception('Error al iniciar sesión con Google');
+    }
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final usuarioData = await _client
+        .from('usuarios')
+        .select()
+        .eq('id', authResponse.user!.id)
+        .single();
+
+    return UsuarioModel.fromJson(usuarioData);
+  }
+
+
+
+
+
 }

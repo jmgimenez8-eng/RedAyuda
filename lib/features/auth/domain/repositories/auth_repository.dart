@@ -14,6 +14,8 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<Either<String, Usuario>> iniciarSesionConGoogle();
+
   Future<Either<String, void>> cerrarSesion();
 
   Future<Either<String, void>> recuperarPassword({

@@ -45,6 +45,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<String, Usuario>> iniciarSesionConGoogle() async {
+    try {
+      final usuario = await datasource.iniciarSesionConGoogle();
+      return Right(usuario);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
   Future<Either<String, void>> cerrarSesion() async {
     try {
       await datasource.cerrarSesion();

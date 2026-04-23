@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "249023475718",
+    "project_id": "redayuda-97cf8",
+    "storage_bucket": "redayuda-97cf8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:249023475718:android:937741b2b8e05f87edd387",
+        "android_client_info": {
+          "package_name": "com.jmgimenez.redayuda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-X-jxZYnA1iKJLNAnMN7QJt7LfIAi3TM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

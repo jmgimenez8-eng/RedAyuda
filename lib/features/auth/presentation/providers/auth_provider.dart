@@ -6,6 +6,7 @@ import '../../domain/usecases/cerrar_sesion.dart';
 import '../../domain/usecases/iniciar_sesion.dart';
 import '../../domain/usecases/recuperar_password.dart';
 import '../../domain/usecases/registrar_usuario.dart';
+import '../../domain/usecases/iniciar_sesion_google.dart';
 
 final authDatasourceProvider = Provider<AuthSupabaseDatasource>(
       (ref) => AuthSupabaseDatasource(),
@@ -23,6 +24,10 @@ final iniciarSesionProvider = Provider<IniciarSesion>(
       (ref) => IniciarSesion(ref.watch(authRepositoryProvider)),
 );
 
+final iniciarSesionConGoogleProvider = Provider<IniciarSesionConGoogle>(
+      (ref) => IniciarSesionConGoogle(ref.watch(authRepositoryProvider)),
+);
+
 final cerrarSesionProvider = Provider<CerrarSesion>(
       (ref) => CerrarSesion(ref.watch(authRepositoryProvider)),
 );
@@ -35,21 +40,26 @@ final authStateProvider = StreamProvider<Usuario?>(
       (ref) => ref.watch(authRepositoryProvider).onAuthStateChange(),
 );
 
+
+
 class AuthNotifier extends StateNotifier<AsyncValue<Usuario?>> {
   final RegistrarUsuario _registrarUsuario;
   final IniciarSesion _iniciarSesion;
   final CerrarSesion _cerrarSesion;
   final RecuperarPassword _recuperarPassword;
+  final IniciarSesionConGoogle _iniciarSesionConGoogle;
 
   AuthNotifier({
     required RegistrarUsuario registrarUsuario,
     required IniciarSesion iniciarSesion,
     required CerrarSesion cerrarSesion,
     required RecuperarPassword recuperarPassword,
+    required IniciarSesionConGoogle iniciarSesionConGoogle,
   })  : _registrarUsuario = registrarUsuario,
         _iniciarSesion = iniciarSesion,
         _cerrarSesion = cerrarSesion,
         _recuperarPassword = recuperarPassword,
+        _iniciarSesionConGoogle = iniciarSesionConGoogle,
         super(const AsyncValue.data(null));
 
   Future<void> registrar({
@@ -86,6 +96,17 @@ class AuthNotifier extends StateNotifier<AsyncValue<Usuario?>> {
     );
   }
 
+  Future<void> iniciarSesionConGoogle() async {
+    state = const AsyncValue.loading();
+    final result = await _iniciarSesionConGoogle();
+    result.fold(
+          (error) => state = AsyncValue.error(error, StackTrace.current),
+          (usuario) => state = AsyncValue.data(usuario),
+    );
+  }
+
+
+
   Future<void> cerrarSesion() async {
     state = const AsyncValue.loading();
     final result = await _cerrarSesion();
@@ -112,5 +133,6 @@ StateNotifierProvider<AuthNotifier, AsyncValue<Usuario?>>(
     iniciarSesion: ref.watch(iniciarSesionProvider),
     cerrarSesion: ref.watch(cerrarSesionProvider),
     recuperarPassword: ref.watch(recuperarPasswordProvider),
+    iniciarSesionConGoogle: ref.watch(iniciarSesionConGoogleProvider),
   ),
 );

@@ -148,6 +148,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'o continúa con',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: authState.isLoading
+                      ? null
+                      : () async {
+                    await ref
+                        .read(authNotifierProvider.notifier)
+                        .iniciarSesionConGoogle();
+                  },
+                  icon: Image.network(
+                    'https://www.google.com/favicon.ico',
+                    height: 20,
+                    width: 20,
+                  ),
+                  label: const Text('Continuar con Google'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: const BorderSide(color: Colors.grey),
+                  ),
+                ),
+
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
