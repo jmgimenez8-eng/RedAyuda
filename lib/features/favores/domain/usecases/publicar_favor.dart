@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../favores/domain/entities/favor.dart';
-import '../repositories/favores_repository.dart';
+import '../entities/favor.dart';
+import '../../../auth/domain/repositories/favores_repository.dart';
 
 class PublicarFavor {
   final FavoresRepository repository;

@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import '../repositories/favores_repository.dart';
+import '../../../auth/domain/repositories/favores_repository.dart';
 
 class CancelarFavor {
   final FavoresRepository repository;

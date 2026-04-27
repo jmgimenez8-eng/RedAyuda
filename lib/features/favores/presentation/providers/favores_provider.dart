@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../favores/data/datasources/favores_supabase_datasource.dart';
-import '../../../favores/data/repositories/favores_repository_impl.dart';
-import '../../../favores/domain/entities/favor.dart';
-import '../../../favores/domain/usecases/cancelar_favor.dart';
-import '../../../favores/domain/usecases/obtener_favores_cercanos.dart';
-import '../../../favores/domain/usecases/obtener_mis_favores.dart';
-import '../../../favores/domain/usecases/publicar_favor.dart';
+import '../../data/datasources/favores_supabase_datasource.dart';
+import '../../data/repositories/favores_repository_impl.dart';
+import '../../domain/entities/favor.dart';
+import '../../domain/usecases/cancelar_favor.dart';
+import '../../domain/usecases/obtener_favores_cercanos.dart';
+import '../../domain/usecases/obtener_mis_favores.dart';
+import '../../domain/usecases/publicar_favor.dart';
 
 final favoresDatasourceProvider = Provider<FavoresSupabaseDatasource>(
       (ref) => FavoresSupabaseDatasource(),

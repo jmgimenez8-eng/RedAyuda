@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_provider.dart';
-import '../../../favores/presentation/pages/mapa_favores_page.dart';
-import '../../../favores/presentation/pages/publicar_favor_page.dart';
+import 'package:redayuda/features/favores/presentation/pages/mis_favores_page.dart';
+import 'perfil_page.dart';
+import 'package:redayuda/features/favores/presentation/pages/mapa_favores_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -16,8 +16,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   final List<Widget> _pages = [
     const MapaFavoresPage(),
-    const Center(child: Text('Mis favores — próximamente')),
-    const Center(child: Text('Perfil — próximamente')),
+    const MisFavoresPage(),
+    const PerfilPage(),
   ];
 
   @override
