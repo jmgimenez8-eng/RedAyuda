@@ -132,14 +132,30 @@ class SubastasSupabaseDatasource {
 
   Stream<List<OfertaModel>> escucharOfertasPorFavor({
     required String favorId,
+    required String solicitanteId,
   }) {
+    final currentUserId = _client.auth.currentUser?.id;
+
     return _client
         .from('ofertas')
         .stream(primaryKey: ['id'])
         .eq('favor_id', favorId)
         .order('precio')
-        .map((data) => data
-        .map((json) => OfertaModel.fromJson(json))
-        .toList());
+        .map((data) {
+      final todasOfertas = data
+          .map((json) => OfertaModel.fromJson(json))
+          .toList();
+
+      if (currentUserId == solicitanteId) {
+        // El solicitante ve todas las ofertas
+        return todasOfertas;
+      } else {
+        // El ayudante solo ve la suya propia
+        return todasOfertas
+            .where((o) => o.ayudanteId == currentUserId)
+            .toList();
+      }
+    });
   }
+
 }

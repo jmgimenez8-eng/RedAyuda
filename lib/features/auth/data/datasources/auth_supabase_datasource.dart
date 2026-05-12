@@ -65,14 +65,24 @@ class AuthSupabaseDatasource {
       throw Exception('Credenciales incorrectas');
     }
 
-    // Pequeño delay para que Supabase procese la sesión
     await Future.delayed(const Duration(milliseconds: 500));
 
-    final usuarioData = await _client
-        .from('usuarios')
-        .select()
-        .eq('id', authResponse.user!.id)
-        .single();
+    // Intentar hasta 3 veces por si el trigger aún no ha terminado
+    Map<String, dynamic>? usuarioData;
+    for (int i = 0; i < 3; i++) {
+      usuarioData = await _client
+          .from('usuarios')
+          .select()
+          .eq('id', authResponse.user!.id)
+          .maybeSingle();
+
+      if (usuarioData != null) break;
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    if (usuarioData == null) {
+      throw Exception('No se encontró el perfil del usuario');
+    }
 
     return UsuarioModel.fromJson(usuarioData);
   }
@@ -117,7 +127,10 @@ class AuthSupabaseDatasource {
       serverClientId: webClientId,
     );
 
+    // Para forzar selección de cuenta
+    await googleSignIn.signOut();
     final googleUser = await googleSignIn.signIn();
+
     if (googleUser == null) throw Exception('Inicio de sesión cancelado');
 
     final googleAuth = await googleUser.authentication;
@@ -142,9 +155,5 @@ class AuthSupabaseDatasource {
 
     return UsuarioModel.fromJson(usuarioData);
   }
-
-
-
-
 
 }

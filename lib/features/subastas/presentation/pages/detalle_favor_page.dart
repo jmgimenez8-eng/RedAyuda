@@ -5,6 +5,8 @@ import '../../../favores/domain/entities/favor.dart';
 import '../providers/subastas_provider.dart';
 import 'enviar_oferta_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:redayuda/features/pagos/presentation/pages/pago_page.dart';
+import 'package:redayuda/features/subastas/domain/entities/oferta.dart';
 
 class DetalleFavorPage extends ConsumerStatefulWidget {
   final Favor favor;
@@ -16,6 +18,12 @@ class DetalleFavorPage extends ConsumerStatefulWidget {
 }
 
 class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
+  final String? _currentUserId =
+      Supabase.instance.client.auth.currentUser?.id;
+
+  bool get _esSolicitante =>
+      _currentUserId == widget.favor.solicitanteId;
+
   @override
   void initState() {
     super.initState();
@@ -28,9 +36,11 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ofertasState = ref.watch(subastasNotifierProvider);
     final ofertasStream = ref.watch(
-      ofertasPorFavorStreamProvider(widget.favor.id),
+      ofertasPorFavorStreamProvider((
+      widget.favor.id,
+      widget.favor.solicitanteId,
+      )),
     );
 
     return Scaffold(
@@ -120,9 +130,11 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Ofertas recibidas',
-              style: TextStyle(
+            Text(
+              _esSolicitante
+                  ? 'Ofertas recibidas'
+                  : 'Tu oferta',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -130,13 +142,15 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
             const SizedBox(height: 8),
             ofertasStream.when(
               data: (ofertas) => ofertas.isEmpty
-                  ? const Card(
+                  ? Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Center(
                     child: Text(
-                      'Aún no hay ofertas para este favor',
-                      style: TextStyle(color: Colors.grey),
+                      _esSolicitante
+                          ? 'Aún no hay ofertas para este favor'
+                          : 'Aún no has enviado ninguna oferta',
+                      style: const TextStyle(color: Colors.grey),
                     ),
                   ),
                 ),
@@ -147,7 +161,7 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                 itemCount: ofertas.length,
                 itemBuilder: (context, index) {
                   final oferta = ofertas[index];
-                  final esMejorOferta = index == 0;
+                  final esMejorOferta = _esSolicitante && index == 0;
                   return Card(
                     color: esMejorOferta
                         ? const Color(0xFF6C63FF).withOpacity(0.05)
@@ -158,7 +172,9 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                             ? const Color(0xFF6C63FF)
                             : Colors.grey,
                         child: Text(
-                          '${index + 1}',
+                          _esSolicitante
+                              ? '${index + 1}'
+                              : '€',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -175,27 +191,28 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                       subtitle: oferta.mensaje != null
                           ? Text(oferta.mensaje!)
                           : null,
-                      trailing: oferta.estado == 'pendiente' &&
+                      trailing: _esSolicitante &&
+                          oferta.estado == 'pendiente' &&
                           widget.favor.estado == 'activo'
                           ? ElevatedButton(
                         onPressed: () async {
                           final exito = await ref
-                              .read(
-                              subastasNotifierProvider.notifier)
+                              .read(subastasNotifierProvider
+                              .notifier)
                               .aceptarOferta(
                             ofertaId: oferta.id,
                             favorId: widget.favor.id,
                           );
                           if (exito && context.mounted) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
-                              const SnackBar(
-                                content:
-                                Text('Oferta aceptada'),
-                                backgroundColor: Colors.green,
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PagoPage(
+                                  favor: widget.favor,
+                                  oferta: oferta,
+                                ),
                               ),
                             );
-                            Navigator.pop(context);
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -207,7 +224,8 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                       )
                           : Chip(
                         label: Text(oferta.estado),
-                        backgroundColor: oferta.estado == 'aceptada'
+                        backgroundColor:
+                        oferta.estado == 'aceptada'
                             ? Colors.green.withOpacity(0.1)
                             : Colors.grey.withOpacity(0.1),
                       ),
@@ -215,22 +233,39 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                   );
                 },
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) =>
-              const Center(child: Text('Error al cargar ofertas')),
+              loading: () =>
+              const Center(child: CircularProgressIndicator()),
+              error: (error, __) =>
+                  Center(child: Text('Error al cargar ofertas: $error')),
             ),
           ],
         ),
       ),
-      floatingActionButton: widget.favor.estado == 'activo' &&
-          widget.favor.solicitanteId != Supabase.instance.client.auth.currentUser?.id
+      floatingActionButton: widget.favor.estado == 'activo' && !_esSolicitante
           ? FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EnviarOfertaPage(favor: widget.favor),
-          ),
-        ),
+        onPressed: () {
+          final ofertasActuales =
+              ref.read(subastasNotifierProvider).value ?? [];
+
+          Oferta? ofertaExistente;
+          try {
+            ofertaExistente = ofertasActuales.firstWhere(
+                  (o) => o.ayudanteId == _currentUserId,
+            );
+          } catch (_) {
+            ofertaExistente = null;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EnviarOfertaPage(
+                favor: widget.favor,
+                ofertaExistente: ofertaExistente,
+              ),
+            ),
+          );
+        },
         backgroundColor: const Color(0xFF6C63FF),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.gavel),

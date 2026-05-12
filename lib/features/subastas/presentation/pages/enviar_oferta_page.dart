@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../favores/domain/entities/favor.dart';
 import '../providers/subastas_provider.dart';
+import 'package:redayuda/features/subastas/domain/entities/oferta.dart';
 
 class EnviarOfertaPage extends ConsumerStatefulWidget {
   final Favor favor;
+  final Oferta? ofertaExistente;
 
-  const EnviarOfertaPage({super.key, required this.favor});
+  const EnviarOfertaPage({super.key, required this.favor, this.ofertaExistente,});
 
   @override
   ConsumerState<EnviarOfertaPage> createState() => _EnviarOfertaPageState();
@@ -16,6 +18,17 @@ class _EnviarOfertaPageState extends ConsumerState<EnviarOfertaPage> {
   final _formKey = GlobalKey<FormState>();
   final _precioController = TextEditingController();
   final _mensajeController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.ofertaExistente != null) {
+      _precioController.text =
+          widget.ofertaExistente!.precio.toStringAsFixed(2);
+      _mensajeController.text =
+          widget.ofertaExistente!.mensaje ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -63,7 +76,10 @@ class _EnviarOfertaPageState extends ConsumerState<EnviarOfertaPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Enviar oferta'),
+        // En el AppBar
+        title: Text(
+            widget.ofertaExistente != null ? 'Mejorar oferta' : 'Enviar oferta'
+        ),
         backgroundColor: const Color(0xFF6C63FF),
         foregroundColor: Colors.white,
       ),
@@ -142,11 +158,11 @@ class _EnviarOfertaPageState extends ConsumerState<EnviarOfertaPage> {
               ElevatedButton.icon(
                 onPressed: subastasState.isLoading ? null : _enviarOferta,
                 icon: const Icon(Icons.gavel),
-                label: subastasState.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  'Enviar oferta',
-                  style: TextStyle(fontSize: 16),
+                label: Text(
+                  widget.ofertaExistente != null
+                      ? 'Mejorar oferta'
+                      : 'Enviar oferta',
+                  style: const TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

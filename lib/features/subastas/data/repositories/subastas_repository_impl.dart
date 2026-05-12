@@ -81,7 +81,11 @@ class SubastasRepositoryImpl implements SubastasRepository {
   @override
   Stream<List<Oferta>> escucharOfertasPorFavor({
     required String favorId,
+    required String solicitanteId,
   }) {
-    return datasource.escucharOfertasPorFavor(favorId: favorId);
+    return datasource.escucharOfertasPorFavor(
+      favorId: favorId,
+      solicitanteId: solicitanteId,
+    );
   }
 }

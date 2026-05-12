@@ -31,11 +31,15 @@ final obtenerMisOfertasProvider = Provider<ObtenerMisOfertas>(
       (ref) => ObtenerMisOfertas(ref.watch(subastasRepositoryProvider)),
 );
 
+
 final ofertasPorFavorStreamProvider =
-StreamProvider.family<List<Oferta>, String>(
-      (ref, favorId) => ref
+StreamProvider.family<List<Oferta>, (String, String)>(
+      (ref, params) => ref
       .watch(subastasRepositoryProvider)
-      .escucharOfertasPorFavor(favorId: favorId),
+      .escucharOfertasPorFavor(
+    favorId: params.$1,
+    solicitanteId: params.$2,
+  ),
 );
 
 class SubastasNotifier extends StateNotifier<AsyncValue<List<Oferta>>> {

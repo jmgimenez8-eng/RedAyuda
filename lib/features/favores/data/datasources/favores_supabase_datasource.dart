@@ -102,6 +102,14 @@ class FavoresSupabaseDatasource {
   }
 
   Future<void> cancelarFavor({required String id}) async {
+    // Cancelar todas las ofertas pendientes
+    await _client
+        .from('ofertas')
+        .update({'estado': 'expirada'})
+        .eq('favor_id', id)
+        .eq('estado', 'pendiente');
+
+    // Cancelar el favor
     await _client
         .from('favores')
         .update({'estado': 'cancelado'})

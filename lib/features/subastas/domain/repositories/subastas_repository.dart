@@ -25,5 +25,6 @@ abstract class SubastasRepository {
 
   Stream<List<Oferta>> escucharOfertasPorFavor({
     required String favorId,
+    required String solicitanteId,
   });
 }
