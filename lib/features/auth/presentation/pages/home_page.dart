@@ -5,6 +5,7 @@ import 'perfil_page.dart';
 import 'package:redayuda/features/favores/presentation/pages/mapa_favores_page.dart';
 import 'package:redayuda/features/favores/presentation/pages/explorar_favores_page.dart';
 import 'package:redayuda/features/subastas/presentation/pages/mis_ofertas_page.dart';
+import 'package:redayuda/features/chat/presentation/pages/conversaciones_page.dart';
 
 
 class HomePage extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     const ExplorarFavoresPage(),
     const MisFavoresPage(),
     const MisOfertasPage(),
+    const ConversacionesPage(),
     const PerfilPage(),
   ];
 
@@ -57,6 +59,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             icon: Icon(Icons.gavel_outlined),
             activeIcon: Icon(Icons.gavel),
             label: 'Mis ofertas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Chats',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outlined),

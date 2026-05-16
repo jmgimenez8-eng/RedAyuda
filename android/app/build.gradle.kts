@@ -16,12 +16,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
         applicationId = "com.jmgimenez.redayuda"
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -36,4 +36,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+
+dependencies {
+    implementation("com.onesignal:OneSignal:[5.0.0, 5.99.99]")
 }

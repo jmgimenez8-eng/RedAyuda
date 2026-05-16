@@ -4,6 +4,7 @@ import 'package:flutter_paypal_payment/flutter_paypal_payment.dart';
 import '../../../favores/domain/entities/favor.dart';
 import '../../../subastas/domain/entities/oferta.dart';
 import '../providers/pagos_provider.dart';
+import 'package:redayuda/features/chat/presentation/pages/chat_page.dart';
 
 class PagoPage extends ConsumerStatefulWidget {
   final Favor favor;
@@ -47,8 +48,8 @@ class _PagoPageState extends ConsumerState<PagoPage> {
       MaterialPageRoute(
         builder: (_) => PaypalCheckoutView(
           sandboxMode: true,
-          clientId: 'ATqsoZSmTh22iirxAECfBSpSWs1YO04aN8i3mnBIWRrbjcGQHs_Poy13OKC1LcMPjhp7hYGN8xt0PQRn',
-          secretKey: 'EIOQFx_lHbmAsJ0W1T28eC68Eyy4f3eSs3Gv3kl4Ni_yvHTSgm6GwCpuR8-CQq2PkpTjL5X9ATCBPCfS',
+          clientId: 'tu_paypal_client_id_aqui',
+          secretKey: 'tu_paypal_secret_key_aqui',
           transactions: [
             {
               'amount': {
@@ -57,7 +58,7 @@ class _PagoPageState extends ConsumerState<PagoPage> {
                 'details': {
                   'subtotal': widget.oferta.precio.toStringAsFixed(2),
                   'shipping': '0',
-                  'shipping_discount': '0',
+                  'shipping_discount': 0,
                 },
               },
               'description': widget.favor.titulo,
@@ -223,7 +224,8 @@ class _PagoPageState extends ConsumerState<PagoPage> {
                           child: Text(
                             widget.favor.titulo,
                             textAlign: TextAlign.right,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -235,7 +237,8 @@ class _PagoPageState extends ConsumerState<PagoPage> {
                         const Text('Importe oferta'),
                         Text(
                           '${widget.oferta.precio.toStringAsFixed(2)} €',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style:
+                          const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -375,7 +378,29 @@ class _PagoPageState extends ConsumerState<PagoPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatPage(
+                      favor: widget.favor,
+                      ayudanteId: widget.oferta.ayudanteId,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.chat_outlined),
+                label: const Text(
+                  'Chatear con el ayudante',
+                  style: TextStyle(fontSize: 16),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Color(0xFF6C63FF)),
+                  foregroundColor: const Color(0xFF6C63FF),
+                ),
+              ),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: pagosState.isLoading ? null : _liberarPago,
                 icon: const Icon(Icons.lock_open),

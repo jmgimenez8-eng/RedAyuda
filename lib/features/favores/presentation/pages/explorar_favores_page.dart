@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../providers/favores_provider.dart';
-import '../../domain/entities/favor.dart';
 import 'package:redayuda/features/subastas/presentation/pages/detalle_favor_page.dart';
 import 'package:geolocator/geolocator.dart';
 

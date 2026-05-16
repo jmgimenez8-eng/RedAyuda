@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../providers/subastas_provider.dart';
-import 'package:redayuda/features/favores/presentation/providers/favores_provider.dart';
 import 'package:redayuda/features/subastas/presentation/pages/detalle_favor_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:redayuda/features/favores/data/models/favor_model.dart';
+import 'package:redayuda/features/chat/presentation/pages/chat_page.dart';
 
 class MisOfertasPage extends ConsumerStatefulWidget {
   const MisOfertasPage({super.key});
@@ -40,6 +40,36 @@ class _MisOfertasPageState extends ConsumerState<MisOfertasPage> {
       case 'rechazada': return Icons.cancel_outlined;
       case 'expirada': return Icons.timer_off_outlined;
       default: return Icons.help_outline;
+    }
+  }
+
+  Future<void> _navegarAlChat(BuildContext context, String favorId) async {
+    try {
+      final favorData = await Supabase.instance.client
+          .from('favores')
+          .select()
+          .eq('id', favorId)
+          .single();
+
+      if (context.mounted) {
+        final favor = FavorModel.fromJson(favorData);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatPage(
+              favor: favor,
+              ayudanteId:
+              Supabase.instance.client.auth.currentUser?.id ?? '',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -110,14 +140,17 @@ class _MisOfertasPageState extends ConsumerState<MisOfertasPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => DetalleFavorPage(favor: favor),
+                              builder: (_) =>
+                                  DetalleFavorPage(favor: favor),
                             ),
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al cargar el favor: $e')),
+                            SnackBar(
+                                content:
+                                Text('Error al cargar el favor: $e')),
                           );
                         }
                       }
@@ -157,7 +190,8 @@ class _MisOfertasPageState extends ConsumerState<MisOfertasPage> {
                               ),
                               const Spacer(),
                               Text(
-                                timeago.format(oferta.createdAt, locale: 'es'),
+                                timeago.format(oferta.createdAt,
+                                    locale: 'es'),
                                 style: const TextStyle(
                                   color: Colors.grey,
                                   fontSize: 12,
@@ -194,6 +228,8 @@ class _MisOfertasPageState extends ConsumerState<MisOfertasPage> {
                             ),
                           ],
                           const SizedBox(height: 8),
+
+                          // Mensaje de oferta aceptada
                           if (oferta.estado == 'aceptada')
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -209,17 +245,66 @@ class _MisOfertasPageState extends ConsumerState<MisOfertasPage> {
                                     size: 16,
                                   ),
                                   SizedBox(width: 8),
-                                  Text(
-                                    '¡Tu oferta fue aceptada! Coordina con el solicitante.',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      '¡Tu oferta fue aceptada! Coordina con el solicitante.',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                          // Mensaje de oferta pendiente
+                          if (oferta.estado == 'pendiente')
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.hourglass_empty,
+                                    color: Colors.orange,
+                                    size: 16,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Tu oferta está pendiente de aceptación.',
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Botón de chat para ofertas pendientes o aceptadas
+                          if (oferta.estado == 'pendiente' ||
+                              oferta.estado == 'aceptada') ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  _navegarAlChat(context, oferta.favorId),
+                              icon: const Icon(Icons.chat_outlined, size: 16),
+                              label: const Text('Ir al chat'),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                    color: Color(0xFF6C63FF)),
+                                foregroundColor: const Color(0xFF6C63FF),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

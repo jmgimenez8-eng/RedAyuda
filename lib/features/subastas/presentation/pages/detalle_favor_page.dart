@@ -7,6 +7,7 @@ import 'enviar_oferta_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:redayuda/features/pagos/presentation/pages/pago_page.dart';
 import 'package:redayuda/features/subastas/domain/entities/oferta.dart';
+import 'package:redayuda/features/chat/presentation/pages/chat_page.dart';
 
 class DetalleFavorPage extends ConsumerStatefulWidget {
   final Favor favor;
@@ -24,6 +25,12 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
   bool get _esSolicitante =>
       _currentUserId == widget.favor.solicitanteId;
 
+  // Chat disponible en activo, en_negociacion y completado
+  bool get _chatDisponible =>
+      widget.favor.estado == 'activo' ||
+          widget.favor.estado == 'en_negociacion' ||
+          widget.favor.estado == 'completado';
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +39,56 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
           .read(subastasNotifierProvider.notifier)
           .cargarOfertasPorFavor(favorId: widget.favor.id);
     });
+  }
+
+  String _obtenerAyudanteId(List<Oferta> ofertas) {
+    try {
+      final ofertaAceptada = ofertas.firstWhere(
+            (o) => o.estado == 'aceptada',
+      );
+      return ofertaAceptada.ayudanteId;
+    } catch (_) {
+      return _esSolicitante ? '' : _currentUserId ?? '';
+    }
+  }
+
+  void _navegarAlChat(BuildContext context, List<Oferta> ofertas) {
+    final ayudanteId = _esSolicitante
+        ? _obtenerAyudanteId(ofertas)
+        : _currentUserId ?? '';
+
+    if (ayudanteId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se encontró el ayudante'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatPage(
+          favor: widget.favor,
+          ayudanteId: ayudanteId,
+        ),
+      ),
+    );
+  }
+
+  bool _tieneAccesoChat(List<Oferta> ofertas) {
+    if (_esSolicitante) {
+      return ofertas.any((o) => o.estado == 'aceptada');
+    } else {
+      // Ayudante puede chatear si tiene oferta pendiente o aceptada
+      return ofertas.any(
+            (o) =>
+        o.ayudanteId == _currentUserId &&
+            (o.estado == 'aceptada' || o.estado == 'pendiente'),
+      );
+    }
   }
 
   @override
@@ -48,6 +105,20 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
         title: const Text('Detalle del favor'),
         backgroundColor: const Color(0xFF6C63FF),
         foregroundColor: Colors.white,
+        actions: [
+          if (_chatDisponible)
+            ofertasStream.when(
+              data: (ofertas) {
+                if (!_tieneAccesoChat(ofertas)) return const SizedBox.shrink();
+                return IconButton(
+                  icon: const Icon(Icons.chat_outlined),
+                  onPressed: () => _navegarAlChat(context, ofertas),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -131,9 +202,7 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              _esSolicitante
-                  ? 'Ofertas recibidas'
-                  : 'Tu oferta',
+              _esSolicitante ? 'Ofertas recibidas' : 'Tu oferta',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -172,10 +241,9 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
                             ? const Color(0xFF6C63FF)
                             : Colors.grey,
                         child: Text(
-                          _esSolicitante
-                              ? '${index + 1}'
-                              : '€',
-                          style: const TextStyle(color: Colors.white),
+                          _esSolicitante ? '${index + 1}' : '€',
+                          style:
+                          const TextStyle(color: Colors.white),
                         ),
                       ),
                       title: Text(
@@ -241,7 +309,8 @@ class _DetalleFavorPageState extends ConsumerState<DetalleFavorPage> {
           ],
         ),
       ),
-      floatingActionButton: widget.favor.estado == 'activo' && !_esSolicitante
+      floatingActionButton:
+      widget.favor.estado == 'activo' && !_esSolicitante
           ? FloatingActionButton.extended(
         onPressed: () {
           final ofertasActuales =

@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/usuario_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class AuthSupabaseDatasource {
   final SupabaseClient _client = Supabase.instance.client;
@@ -12,7 +12,6 @@ class AuthSupabaseDatasource {
     required String password,
     required String telefono,
   }) async {
-
     final authResponse = await _client.auth.signUp(
       email: email,
       password: password,
@@ -25,7 +24,7 @@ class AuthSupabaseDatasource {
 
     try {
       await _client.from('usuarios').insert({
-        'id': user.id, // El UUID de Auth
+        'id': user.id,
         'nombre': nombre,
         'email': email,
         'telefono': telefono,
@@ -34,6 +33,9 @@ class AuthSupabaseDatasource {
         'strikes': 0,
         'estado': 'activo',
       });
+
+      // Asignar External ID en OneSignal
+      OneSignal.login(user.id);
 
       return UsuarioModel(
         id: user.id,
@@ -45,7 +47,6 @@ class AuthSupabaseDatasource {
         strikes: 0,
         estado: 'activo',
       );
-
     } catch (e) {
       print("Error en Insert: $e");
       rethrow;
@@ -67,7 +68,6 @@ class AuthSupabaseDatasource {
 
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Intentar hasta 3 veces por si el trigger aún no ha terminado
     Map<String, dynamic>? usuarioData;
     for (int i = 0; i < 3; i++) {
       usuarioData = await _client
@@ -84,10 +84,15 @@ class AuthSupabaseDatasource {
       throw Exception('No se encontró el perfil del usuario');
     }
 
+    // Asignar External ID en OneSignal
+    OneSignal.login(authResponse.user!.id);
+
     return UsuarioModel.fromJson(usuarioData);
   }
 
   Future<void> cerrarSesion() async {
+    // Desasociar usuario de OneSignal al cerrar sesión
+    OneSignal.logout();
     await _client.auth.signOut();
   }
 
@@ -121,13 +126,13 @@ class AuthSupabaseDatasource {
   }
 
   Future<UsuarioModel> iniciarSesionConGoogle() async {
-    const webClientId = '623074679595-3d1opqct0op4gb2bt5521i26icl2s9ct.apps.googleusercontent.com';
+    const webClientId =
+        '623074679595-3d1opqct0op4gb2bt5521i26icl2s9ct.apps.googleusercontent.com';
 
     final GoogleSignIn googleSignIn = GoogleSignIn(
       serverClientId: webClientId,
     );
 
-    // Para forzar selección de cuenta
     await googleSignIn.signOut();
     final googleUser = await googleSignIn.signIn();
 
@@ -153,7 +158,9 @@ class AuthSupabaseDatasource {
         .eq('id', authResponse.user!.id)
         .single();
 
+    // Asignar External ID en OneSignal
+    OneSignal.login(authResponse.user!.id);
+
     return UsuarioModel.fromJson(usuarioData);
   }
-
 }
