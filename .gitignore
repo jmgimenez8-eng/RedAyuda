@@ -1,4 +1,6 @@
 # Miscellaneous
+/tools/
+/supabase/.temp/
 *.class
 *.log
 *.pyc

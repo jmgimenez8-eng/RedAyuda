@@ -14,6 +14,20 @@ class PagosSupabaseDatasource {
     final solicitanteId = _client.auth.currentUser?.id;
     if (solicitanteId == null) throw Exception('No hay sesión activa');
 
+    // Verificar si ya existe un pago para este favor
+    final pagoExistente = await _client
+        .from('pagos')
+        .select()
+        .eq('favor_id', favorId)
+        .eq('estado', 'retenido')
+        .maybeSingle();
+
+    // Si existe un pago retenido sin paypal_order_id reutilizarlo
+    if (pagoExistente != null &&
+        pagoExistente['paypal_order_id'] == null) {
+      return PagoModel.fromJson(pagoExistente);
+    }
+
     final comision = importe * 0.05;
 
     final data = await _client
@@ -33,16 +47,38 @@ class PagosSupabaseDatasource {
     return PagoModel.fromJson(data);
   }
 
-  Future<PagoModel> confirmarPago({
-    required String pagoId,
-    required String paypalOrderId,
-    required String paypalCaptureId,
-  }) async {
+  Future<Map<String, dynamic>> crearOrdenPaypal({required String pagoId}) async {
+    final response = await _client.functions.invoke(
+      'paypal-create-order',
+      body: {'pagoId': pagoId},
+    );
+    if (response.status != 200) {
+      throw Exception('Error creando la orden de PayPal: ${response.data}');
+    }
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<PagoModel> capturarOrdenPaypal({required String pagoId}) async {
+    final response = await _client.functions.invoke(
+      'paypal-capture-order',
+      body: {'pagoId': pagoId},
+    );
+    if (response.status != 200) {
+      throw Exception('Error capturando el pago de PayPal: ${response.data}');
+    }
+    final json = (response.data as Map<String, dynamic>)['pago']
+        as Map<String, dynamic>;
+    return PagoModel.fromJson(json);
+  }
+
+  Future<PagoModel> confirmarPagoSimulado({required String pagoId}) async {
+    final marca = 'SIMULADO-${DateTime.now().millisecondsSinceEpoch}';
+
     final data = await _client
         .from('pagos')
         .update({
-      'paypal_order_id': paypalOrderId,
-      'paypal_capture_id': paypalCaptureId,
+      'paypal_order_id': marca,
+      'paypal_capture_id': marca,
       'estado': 'retenido',
     })
         .eq('id', pagoId)

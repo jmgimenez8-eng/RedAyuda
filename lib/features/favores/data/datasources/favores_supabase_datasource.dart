@@ -49,11 +49,29 @@ class FavoresSupabaseDatasource {
     return FavorModel.fromJson(data);
   }
 
+  /// Marca como 'expirado' cualquier favor 'activo' cuya ventana de subasta
+  /// ya haya pasado. Se llama de forma perezosa antes de leer favores, ya
+  /// que no hay ningún job periódico en el backend que lo haga solo.
+  Future<void> _expirarFavoresVencidos({String? id, String? solicitanteId}) async {
+    var query = _client
+        .from('favores')
+        .update({'estado': 'expirado'})
+        .eq('estado', 'activo')
+        .lt('expires_at', DateTime.now().toIso8601String());
+
+    if (id != null) query = query.eq('id', id);
+    if (solicitanteId != null) query = query.eq('solicitante_id', solicitanteId);
+
+    await query;
+  }
+
   Future<List<FavorModel>> obtenerFavoresCercanos({
     required double latitud,
     required double longitud,
     required double radioKm,
   }) async {
+    await _expirarFavoresVencidos();
+
     final data = await _client
         .from('favores')
         .select()
@@ -77,6 +95,8 @@ class FavoresSupabaseDatasource {
   }
 
   Future<FavorModel> obtenerFavorPorId({required String id}) async {
+    await _expirarFavoresVencidos(id: id);
+
     final data = await _client
         .from('favores')
         .select()
@@ -89,6 +109,8 @@ class FavoresSupabaseDatasource {
   Future<List<FavorModel>> obtenerMisFavores() async {
     final solicitanteId = _client.auth.currentUser?.id;
     if (solicitanteId == null) throw Exception('No hay sesión activa');
+
+    await _expirarFavoresVencidos(solicitanteId: solicitanteId);
 
     final data = await _client
         .from('favores')
@@ -114,6 +136,18 @@ class FavoresSupabaseDatasource {
         .from('favores')
         .update({'estado': 'cancelado'})
         .eq('id', id);
+  }
+
+  Future<FavorModel> marcarFavorEntregado({required String favorId}) async {
+    final data = await _client
+        .from('favores')
+        .update({'estado': 'entregado'})
+        .eq('id', favorId)
+        .eq('estado', 'en_negociacion')
+        .select()
+        .single();
+
+    return FavorModel.fromJson(data);
   }
 
   Stream<List<FavorModel>> escucharFavoresCercanos({

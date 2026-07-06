@@ -85,6 +85,16 @@ class FavoresRepositoryImpl implements FavoresRepository {
   }
 
   @override
+  Future<Either<String, Favor>> marcarFavorEntregado({required String id}) async {
+    try {
+      final favor = await datasource.marcarFavorEntregado(favorId: id);
+      return Right(favor);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
   Stream<List<Favor>> escucharFavoresCercanos({
     required double latitud,
     required double longitud,

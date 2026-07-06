@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../entities/pago.dart';
+import '../entities/paypal_orden.dart';
 
 abstract class PagosRepository {
   Future<Either<String, Pago>> crearPago({
@@ -9,10 +10,16 @@ abstract class PagosRepository {
     required double importe,
   });
 
-  Future<Either<String, Pago>> confirmarPago({
+  Future<Either<String, PaypalOrden>> crearOrdenPaypal({
     required String pagoId,
-    required String paypalOrderId,
-    required String paypalCaptureId,
+  });
+
+  Future<Either<String, Pago>> capturarOrdenPaypal({
+    required String pagoId,
+  });
+
+  Future<Either<String, Pago>> confirmarPagoSimulado({
+    required String pagoId,
   });
 
   Future<Either<String, Pago>> liberarPago({

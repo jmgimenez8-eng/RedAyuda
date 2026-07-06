@@ -28,6 +28,10 @@ abstract class FavoresRepository {
     required String id,
   });
 
+  Future<Either<String, Favor>> marcarFavorEntregado({
+    required String id,
+  });
+
   Stream<List<Favor>> escucharFavoresCercanos({
     required double latitud,
     required double longitud,

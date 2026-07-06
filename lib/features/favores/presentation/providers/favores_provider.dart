@@ -3,6 +3,7 @@ import '../../data/datasources/favores_supabase_datasource.dart';
 import '../../data/repositories/favores_repository_impl.dart';
 import '../../domain/entities/favor.dart';
 import '../../domain/usecases/cancelar_favor.dart';
+import '../../domain/usecases/marcar_favor_entregado.dart';
 import '../../domain/usecases/obtener_favores_cercanos.dart';
 import '../../domain/usecases/obtener_mis_favores.dart';
 import '../../domain/usecases/publicar_favor.dart';
@@ -29,6 +30,10 @@ final obtenerMisFavoresProvider = Provider<ObtenerMisFavores>(
 
 final cancelarFavorProvider = Provider<CancelarFavor>(
       (ref) => CancelarFavor(ref.watch(favoresRepositoryProvider)),
+);
+
+final marcarFavorEntregadoProvider = Provider<MarcarFavorEntregado>(
+      (ref) => MarcarFavorEntregado(ref.watch(favoresRepositoryProvider)),
 );
 
 final favoresCercanosStreamProvider = StreamProvider.family<List<Favor>, Map<String, double>>(

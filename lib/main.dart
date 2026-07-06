@@ -5,6 +5,7 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/pages/home_page.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'config/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,12 +36,9 @@ class RedAyudaApp extends ConsumerWidget {
     return MaterialApp(
       title: 'RedAyuda',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6C63FF),
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      themeMode: ThemeMode.system,
       home: authState.when(
         data: (usuario) {
           if (usuario != null) {
@@ -53,7 +51,7 @@ class RedAyudaApp extends ConsumerWidget {
             child: CircularProgressIndicator(),
           ),
         ),
-        error: (_, __) => const LoginPage(),
+        error: (_, _) => const LoginPage(),
       ),
     );
   }

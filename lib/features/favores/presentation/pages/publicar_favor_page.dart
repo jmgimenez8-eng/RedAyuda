@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../auth/presentation/providers/favores_provider.dart';
+import 'package:redayuda/config/app_theme.dart';
 
 class PublicarFavorPage extends ConsumerStatefulWidget {
   const PublicarFavorPage({super.key});
@@ -32,7 +33,7 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
   ];
 
   final List<Map<String, String>> _ventanas = [
-    {'valor': '30min', 'label': '30 minutos'},
+    {'valor': '30min', 'label': '30 min'},
     {'valor': '1h', 'label': '1 hora'},
     {'valor': '24h', 'label': '24 horas'},
   ];
@@ -73,12 +74,12 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
     } finally {
-      setState(() => _obtendiendoUbicacion = false);
+      if (mounted) setState(() => _obtendiendoUbicacion = false);
     }
   }
 
@@ -88,27 +89,28 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Debes obtener tu ubicación primero'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
     }
 
-    final exito = await ref.read(favoresNotifierProvider.notifier).publicarFavor(
-      titulo: _tituloController.text.trim(),
-      descripcion: _descripcionController.text.trim(),
-      categoria: _categoriaSeleccionada,
-      latitud: _latitud!,
-      longitud: _longitud!,
-      radioKm: 5.0,
-      ventanaSubasta: _ventanaSeleccionada,
-    );
+    final exito =
+        await ref.read(favoresNotifierProvider.notifier).publicarFavor(
+              titulo: _tituloController.text.trim(),
+              descripcion: _descripcionController.text.trim(),
+              categoria: _categoriaSeleccionada,
+              latitud: _latitud!,
+              longitud: _longitud!,
+              radioKm: 5.0,
+              ventanaSubasta: _ventanaSeleccionada,
+            );
 
     if (exito && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Favor publicado correctamente'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
       Navigator.pop(context);
@@ -117,16 +119,14 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final favoresState = ref.watch(favoresNotifierProvider);
+    final ubicacionOk = _latitud != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Publicar favor'),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('Publicar favor')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(
           key: _formKey,
           child: Column(
@@ -134,29 +134,28 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
             children: [
               TextFormField(
                 controller: _tituloController,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Título del favor',
-                  prefixIcon: Icon(Icons.title),
-                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.title_rounded),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Introduce un título';
                   }
-                  if (value.length < 5) {
-                    return 'Mínimo 5 caracteres';
-                  }
+                  if (value.length < 5) return 'Mínimo 5 caracteres';
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _descripcionController,
                 maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                  prefixIcon: Icon(Icons.description_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -165,78 +164,84 @@ class _PublicarFavorPageState extends ConsumerState<PublicarFavorPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<String>(
-                value: _categoriaSeleccionada,
+                initialValue: _categoriaSeleccionada,
                 decoration: const InputDecoration(
                   labelText: 'Categoría',
-                  prefixIcon: Icon(Icons.category),
-                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category_outlined),
                 ),
                 items: _categorias
-                    .map((cat) => DropdownMenuItem(
-                  value: cat,
-                  child: Text(cat),
-                ))
+                    .map((cat) =>
+                        DropdownMenuItem(value: cat, child: Text(cat)))
                     .toList(),
                 onChanged: (value) =>
                     setState(() => _categoriaSeleccionada = value!),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _ventanaSeleccionada,
-                decoration: const InputDecoration(
-                  labelText: 'Tiempo de subasta',
-                  prefixIcon: Icon(Icons.timer),
-                  border: OutlineInputBorder(),
-                ),
-                items: _ventanas
-                    .map((v) => DropdownMenuItem(
-                  value: v['valor'],
-                  child: Text(v['label']!),
-                ))
-                    .toList(),
-                onChanged: (value) =>
-                    setState(() => _ventanaSeleccionada = value!),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Tiempo de subasta', style: theme.textTheme.titleSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.xs,
+                children: _ventanas.map((v) {
+                  final activa = _ventanaSeleccionada == v['valor'];
+                  return ChoiceChip(
+                    label: Text(v['label']!),
+                    selected: activa,
+                    showCheckmark: false,
+                    onSelected: (_) =>
+                        setState(() => _ventanaSeleccionada = v['valor']!),
+                    labelStyle: theme.textTheme.labelMedium?.copyWith(
+                      color: activa
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: activa ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                    side: BorderSide(
+                      color: activa
+                          ? Colors.transparent
+                          : theme.colorScheme.outline,
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               OutlinedButton.icon(
                 onPressed: _obtendiendoUbicacion ? null : _obtenerUbicacion,
                 icon: _obtendiendoUbicacion
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.location_on),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.4),
+                      )
+                    : Icon(ubicacionOk
+                        ? Icons.check_circle_rounded
+                        : Icons.my_location_rounded),
                 label: Text(
-                  _latitud != null
-                      ? 'Ubicación obtenida ✓'
-                      : 'Obtener mi ubicación',
+                  ubicacionOk ? 'Ubicación obtenida' : 'Obtener mi ubicación',
                 ),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   side: BorderSide(
-                    color: _latitud != null ? Colors.green : Colors.grey,
+                    color: ubicacionOk
+                        ? AppColors.success
+                        : theme.colorScheme.outline,
                   ),
                   foregroundColor:
-                  _latitud != null ? Colors.green : Colors.grey,
+                      ubicacionOk ? AppColors.success : theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
+              const SizedBox(height: AppSpacing.lg),
+              FilledButton.icon(
                 onPressed: favoresState.isLoading ? null : _publicar,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF6C63FF),
-                  foregroundColor: Colors.white,
-                ),
-                child: favoresState.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  'Publicar favor',
-                  style: TextStyle(fontSize: 16),
-                ),
+                icon: favoresState.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.4, color: Colors.white),
+                      )
+                    : const Icon(Icons.campaign_rounded),
+                label: const Text('Publicar favor'),
               ),
             ],
           ),

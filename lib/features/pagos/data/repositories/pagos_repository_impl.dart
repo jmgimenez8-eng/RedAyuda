@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import '../../domain/entities/pago.dart';
+import '../../domain/entities/paypal_orden.dart';
 import '../../domain/repositories/pagos_repository.dart';
 import '../datasources/pagos_supabase_datasource.dart';
 
@@ -29,17 +30,38 @@ class PagosRepositoryImpl implements PagosRepository {
   }
 
   @override
-  Future<Either<String, Pago>> confirmarPago({
+  Future<Either<String, PaypalOrden>> crearOrdenPaypal({
     required String pagoId,
-    required String paypalOrderId,
-    required String paypalCaptureId,
   }) async {
     try {
-      final pago = await datasource.confirmarPago(
-        pagoId: pagoId,
-        paypalOrderId: paypalOrderId,
-        paypalCaptureId: paypalCaptureId,
-      );
+      final result = await datasource.crearOrdenPaypal(pagoId: pagoId);
+      return Right(PaypalOrden(
+        orderId: result['orderId'] as String,
+        approveUrl: result['approveUrl'] as String,
+      ));
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, Pago>> capturarOrdenPaypal({
+    required String pagoId,
+  }) async {
+    try {
+      final pago = await datasource.capturarOrdenPaypal(pagoId: pagoId);
+      return Right(pago);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, Pago>> confirmarPagoSimulado({
+    required String pagoId,
+  }) async {
+    try {
+      final pago = await datasource.confirmarPagoSimulado(pagoId: pagoId);
       return Right(pago);
     } catch (e) {
       return Left(e.toString());
